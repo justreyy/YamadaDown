@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="id" data-anim="on" data-rm="off" data-text="1" data-int="1">
 <head>
-  <script src="https://quge5.com/88/tag.min.js" data-zone="274493" async data-cfasync="false"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
@@ -21,7 +20,7 @@
 </head>
 <body>
 
-<!-- Ikon: satu gaya (garis 2px, ujung membulat) -->
+<!-- Ikon: satu gaya (garis tegas, ujung siku) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
@@ -78,36 +77,41 @@
 
   <!-- ===================== MAIN MENU ===================== -->
   <section id="screen-menu" class="screen menu" data-screen="menu" hidden>
-    <div class="hud">
-      <span class="chip chip-ver"><svg class="i"><use href="#i-zap"/></svg><span data-i18n="menu.version">VERSI</span> <b class="ver-text">6.0.0</b></span>
+    <div class="menu-ghost" aria-hidden="true">YAMADA</div>
+    <header class="hud">
+      <div class="player"><img class="site-logo-img" src="LOGO.jpg" alt="" width="38" height="38"><div><b id="hudName">YAMADA DOWN</b><small><span data-i18n="menu.version">VERSI</span> <span class="ver-text">6.0.0</span></small></div></div>
       <span class="chip chip-status" id="menuStatus"><i class="dot"></i><span id="menuStatusText">ONLINE</span></span>
-    </div>
+    </header>
 
-    <div class="stage">
-      <div class="bubble bubble-down" id="menuBubble"><span id="menuBubbleText"></span></div>
-      <div class="mascot-wrap">
-        <div class="halo" aria-hidden="true"></div>
-        <div class="mascot" data-mascot data-size="xl" data-mood="normal" data-secret></div>
+    <div class="menu-grid">
+      <div class="stage">
+        <div class="portrait"><div class="mascot" data-mascot data-size="xl" data-mood="normal" data-secret></div></div>
+        <div class="bubble" id="menuBubble"><span id="menuBubbleText"></span></div>
       </div>
-      <h1 class="logo" id="logoText" aria-label="YAMADA DOWN"><span class="l1">YAMADA</span><span class="l2">DOWN</span></h1>
-      <p class="tagline" data-i18n="app.tagline">Your Personal Media Tools</p>
-    </div>
 
-    <nav class="menu-btns" aria-label="Main menu">
-      <button class="btn btn-primary btn-xl" data-go="tools" data-act="start" type="button"><svg class="i"><use href="#i-play"/></svg><span data-i18n="btn.start">START</span></button>
-      <div class="row2">
-        <button class="btn btn-ghost" data-go="guide" data-act="guide" type="button"><svg class="i"><use href="#i-book"/></svg><span data-i18n="btn.guide">GUIDE</span></button>
-        <button class="btn btn-ghost" data-go="setting" data-act="setting" type="button"><svg class="i"><use href="#i-sliders"/></svg><span data-i18n="btn.setting">SETTING</span></button>
+      <div class="menu-side">
+        <div>
+          <h1 class="logo" id="logoText" aria-label="YAMADA DOWN"><span class="l1">YAMADA</span><span class="l2">DOWN</span></h1>
+          <p class="tagline" data-i18n="app.tagline">Your Personal Media Tools</p>
+        </div>
+        <nav class="menu-list" aria-label="Main menu" data-kb>
+          <button class="mi mi-main" data-go="tools" data-act="start" type="button"><span class="n">01</span><span class="t" data-i18n="btn.start">START</span><svg class="i"><use href="#i-play"/></svg></button>
+          <button class="mi" data-go="guide" data-act="guide" type="button"><span class="n">02</span><span class="t" data-i18n="btn.guide">GUIDE</span><svg class="i"><use href="#i-book"/></svg></button>
+          <button class="mi" data-go="setting" data-act="setting" type="button"><span class="n">03</span><span class="t" data-i18n="btn.setting">SETTING</span><svg class="i"><use href="#i-sliders"/></svg></button>
+        </nav>
+        <div class="sysbar" aria-label="System status">
+          <div class="sys"><small data-i18n="sys.device">Perangkat</small><b id="deviceType">...</b></div>
+          <div class="sys"><small data-i18n="sys.battery">Baterai</small><b id="deviceBatteryStatus">...</b></div>
+          <div class="sys"><small data-i18n="sys.network">Jaringan</small><b id="netStatus">...</b></div>
+          <div class="sys"><small data-i18n="sys.service">Layanan</small><b id="serviceStatus">...</b></div>
+        </div>
       </div>
-    </nav>
-
-    <div class="sysbar" aria-label="System status">
-      <div class="sys"><svg class="i"><use href="#i-phone"/></svg><small data-i18n="sys.device">Perangkat</small><b id="deviceType">...</b></div>
-      <div class="sys"><svg class="i"><use href="#i-battery"/></svg><small data-i18n="sys.battery">Baterai</small><b id="deviceBatteryStatus">...</b></div>
-      <div class="sys"><svg class="i"><use href="#i-wifi"/></svg><small data-i18n="sys.network">Jaringan</small><b id="netStatus">...</b></div>
-      <div class="sys"><svg class="i"><use href="#i-zap"/></svg><small data-i18n="sys.service">Layanan</small><b id="serviceStatus">...</b></div>
     </div>
-    <p class="credit" data-i18n="credit">Dibuat oleh JustReyy • YamadaTeam</p>
+
+    <footer class="foot">
+      <p class="credit" data-i18n="credit">Dibuat oleh JustReyy • YamadaTeam</p>
+      <p class="keys" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd>PILIH</span><span><kbd>ENTER</kbd>OK</span><span><kbd>ESC</kbd>BACK</span></p>
+    </footer>
   </section>
 
   <!-- ===================== SELECT YOUR TOOLS ===================== -->
@@ -135,13 +139,15 @@
       <img id="toolBigIcon" class="platform-ico" src="Youtube.jpg" alt="">
     </header>
 
-    <div class="coach">
-      <div class="mascot" data-mascot data-size="md" data-mood="explain" id="toolMascot"></div>
-      <div class="bubble bubble-left"><span id="toolBubble" data-i18n="tool.idle">Tempel linknya, lalu tekan DOWNLOAD.</span></div>
+    <div class="split">
+    <div class="split-l">
+      <div class="coach">
+        <div class="mascot" data-mascot data-size="md" data-mood="explain" id="toolMascot"></div>
+        <div class="bubble bubble-left"><span id="toolBubble" data-i18n="tool.idle">Tempel linknya, lalu tekan DOWNLOAD.</span></div>
+      </div>
+      <p id="toolDescription" class="lead"></p>
     </div>
-
-    <p id="toolDescription" class="lead"></p>
-
+    <div class="split-r">
     <div class="panel download-box">
       <label for="videoUrl" class="label" data-i18n="tool.urlLabel">URL MEDIA</label>
       <div class="input-row">
@@ -153,6 +159,8 @@
     </div>
 
     <div id="resultBox" class="result-box" hidden></div>
+    </div>
+    </div>
   </section>
 
   <!-- ===================== GUIDE ===================== -->
@@ -172,9 +180,12 @@
     </div>
 
     <div id="guideRun" class="guide-run" hidden>
+      <div class="split-l">
       <div class="progress" id="guideProgress" aria-hidden="true"></div>
       <div class="step-label"><span id="guideStepLabel">STEP 1/5</span></div>
       <div class="scene-card" id="guideScene"></div>
+      </div>
+      <div class="split-r">
       <h3 class="step-title" id="guideStepTitle"></h3>
       <div class="coach">
         <div class="mascot" data-mascot data-size="md" data-mood="explain" id="guideMascot"></div>
@@ -183,6 +194,7 @@
       <div class="row2 guide-nav">
         <button class="btn btn-ghost" id="guidePrev" type="button"><svg class="i"><use href="#i-chev-l"/></svg><span data-i18n="btn.prev">PREVIOUS</span></button>
         <button class="btn btn-primary" id="guideNext" type="button"><span id="guideNextText" data-i18n="btn.next">NEXT</span><svg class="i"><use href="#i-chev-r"/></svg></button>
+      </div>
       </div>
     </div>
   </section>

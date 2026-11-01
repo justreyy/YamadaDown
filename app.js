@@ -374,6 +374,39 @@ document.addEventListener("click", e => {
   if (card) { openToolFromCard(card.dataset.tool); }
 });
 
+
+// ---------------------------------------------------------------------
+// Keyboard (PC): panah = pilih, Enter = OK, Esc = kembali
+// ---------------------------------------------------------------------
+function kbItems() {
+  const scr = $("#screen-" + current); if (!scr || scr.hidden) return [];
+  const sel = {
+    menu: ".mi", tools: ".tool-card", guide: ".guide-card, #guidePrev, #guideNext",
+    setting: ".tab, .pane.active .switch input, .pane.active .seg button, .pane.active .btn", tool: "#videoUrl, #pasteBtn, #downloadBtn, .download-option",
+    admin: ".tab, .pane.active .btn"
+  }[current];
+  return sel ? $$(sel, scr).filter(el => el.offsetParent !== null) : [];
+}
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input[type=text],input[type=url],input[type=password],textarea")) {
+    if (e.key === "Escape") e.target.blur();
+    return;
+  }
+  if (!$("#loading") && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    if (!$("#secretDialog").hidden || !$("#resetDialog").hidden) return;
+    const items = kbItems(); if (!items.length) return;
+    const i = items.indexOf(document.activeElement);
+    const fwd = e.key === "ArrowDown" || e.key === "ArrowRight";
+    const next = i < 0 ? items[0] : items[(i + (fwd ? 1 : items.length - 1)) % items.length];
+    next.focus(); next.scrollIntoView({ block: "nearest" });
+    sfx("click"); e.preventDefault();
+  } else if (e.key === "Escape") {
+    if (!$("#secretDialog").hidden) { $("#secretDialog").hidden = true; return; }
+    if (!$("#resetDialog").hidden) { openResetDialog(false); return; }
+    if (current && current !== "menu") { if (current === "guide" && guideRun) $("#guideBack").click(); else goBack(); }
+  }
+});
+
 // ---------------------------------------------------------------------
 // MAIN MENU
 // ---------------------------------------------------------------------
@@ -408,17 +441,18 @@ function renderToolList() {
   const list = $("#toolList"); if (!list) return;
   const ids = sortedToolIds();
   const topId = ids[0] && (popularity[ids[0]] || 0) > 0 ? ids[0] : null;
-  list.innerHTML = ids.map(id => {
+  list.innerHTML = ids.map((id, n) => {
     const s = platformSettings[id] || DEFAULT_PLATFORM_SETTINGS[id];
     const off = s.enabled === false;
     const tags = off
-      ? `<span class="tag tag-off">${icon("x")}${t("tools.disabled")}</span>`
-      : `<span class="tag tag-ok">${icon("check")}${t("tools.available")}</span>` +
+      ? `<span class="tag tag-off">${t("tools.disabled")}</span>`
+      : `<span class="tag tag-ok">${t("tools.available")}</span>` +
         (id === topId ? `<span class="tag tag-pop">${icon("flame")}${t("tools.popular")}</span>` : "");
     return `
       <button class="tool-card${off ? " is-disabled" : ""}" data-tool="${id}" type="button" ${off ? 'aria-disabled="true"' : ""}>
-        <img class="ico" src="${TOOL_META[id].icon}" alt="" width="64" height="64">
-        <span>
+        <span class="idx">0${n + 1}</span>
+        <img class="ico" src="${TOOL_META[id].icon}" alt="" width="62" height="62">
+        <span class="info">
           <span class="name">${escapeHtml(toolName(id))}</span>
           <span class="desc">${escapeHtml(t("tool." + id + ".desc"))}</span>
           <span class="tags">${tags}</span>
@@ -1022,6 +1056,7 @@ function applySiteSettingsToUI(site) {
   $$(".site-logo-img").forEach(img => { img.src = siteSettings.logoUrl; });
   applyLogoText(siteSettings.name);
   $("#aboutName").textContent = siteSettings.name;
+  const hn = $("#hudName"); if (hn) hn.textContent = siteSettings.name.toUpperCase();
   const cs = $("#csLink"); if (cs) cs.href = safeHref(siteSettings.csLink, CONFIG.customerService);
   CONFIG.customerService = siteSettings.csLink;
 }
