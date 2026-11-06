@@ -658,3 +658,90 @@ html[data-rm="on"] .btn,html[data-rm="on"] .tool-card,html[data-rm="on"] .mi{tra
   .tool-card .ico{width:64px;height:64px}
   .topbar-title h2{font-size:1.2rem}
 }
+
+/* =====================================================================
+   LIQUID GLASS — kaca bening berembun di atas latar berwarna.
+   Satu sumber nilai lewat variabel; saklar GLASS (SETTING > DISPLAY)
+   mengganti ke panel putih biasa untuk HP yang lebih lambat.
+   ===================================================================== */
+:root{
+  --g-bg:linear-gradient(135deg,rgba(255,255,255,.74),rgba(255,255,255,.28) 55%,rgba(255,255,255,.5));
+  --g-bg-blue:linear-gradient(135deg,rgba(60,120,255,.95),rgba(31,91,255,.78) 55%,rgba(110,170,255,.85));
+  --g-bg-sky:linear-gradient(135deg,rgba(190,226,255,.9),rgba(143,208,255,.55));
+  --g-blur:blur(18px) saturate(1.8);
+  --g-edge:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 0 0 1px rgba(255,255,255,.55),inset 0 -3px 8px rgba(31,91,255,.10),inset 10px 10px 26px rgba(255,255,255,.35);
+  --g-edge-blue:inset 0 2px 0 rgba(255,255,255,.65),inset 0 0 0 1px rgba(255,255,255,.35),inset 0 -4px 10px rgba(10,28,74,.28);
+  --g-drop:0 12px 30px rgba(31,91,255,.20),0 2px 6px rgba(10,28,74,.10);
+  --g-line:rgba(10,28,74,.20);
+}
+html.noglass{--g-bg:#fff;--g-bg-sky:var(--sky-l);--g-blur:none}
+
+/* latar berwarna + gumpalan yang melayang pelan di belakang kaca */
+.bg{background:
+  radial-gradient(60vmax 50vmax at 14% 22%,rgba(110,175,255,.55),transparent 62%),
+  radial-gradient(52vmax 46vmax at 88% 72%,rgba(31,91,255,.34),transparent 62%),
+  radial-gradient(40vmax 36vmax at 62% 8%,rgba(143,208,255,.6),transparent 62%),#fff}
+.orb{position:absolute;border-radius:50%;filter:blur(8px);opacity:.8}
+.orb.o1{width:44vmin;height:44vmin;left:6%;top:30%;background:radial-gradient(circle at 35% 30%,#fff,var(--sky) 45%,rgba(31,91,255,.7))}
+.orb.o2{width:30vmin;height:30vmin;right:10%;top:8%;background:radial-gradient(circle at 35% 30%,#fff,#9fd4ff 45%,rgba(31,91,255,.55))}
+.fx .orb.o1{animation:orbA 16s ease-in-out infinite}
+.fx .orb.o2{animation:orbB 20s ease-in-out infinite}
+@keyframes orbA{0%,100%{transform:translate(0,0)}50%{transform:translate(calc(var(--amp)*7vmin),calc(var(--amp)*-5vmin))}}
+@keyframes orbB{0%,100%{transform:translate(0,0)}50%{transform:translate(calc(var(--amp)*-6vmin),calc(var(--amp)*6vmin))}}
+html.noglass .orb{display:none}
+
+/* permukaan kaca */
+.panel,.bubble,.tool-card,.guide-card,.result-box,.scene-card,.modal-box,.big-notice-box,.wa-notice,.tip,.chip,.sys,.stat,.cfg li,.platform-row,
+.download-option,.icon-btn,.tab,.seg button,.mi,.btn-ghost,.segbar,.toast,.dock{
+  background:var(--g-bg);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);
+  border:1.5px solid var(--g-line);box-shadow:var(--g-edge),var(--g-drop)}
+.panel{box-shadow:var(--g-edge),var(--g-drop)}
+.scene-card{background:var(--g-bg),radial-gradient(circle,rgba(31,91,255,.18) 1.4px,transparent 1.8px) 0 0/14px 14px}
+.sys{border-left:5px solid var(--blue)}
+.stat{border-left:8px solid var(--blue)}
+.cfg li{border-left:6px solid rgba(31,91,255,.35)}
+.tip{border-left:8px solid var(--blue)}
+.toast{border-left:8px solid var(--blue);background:linear-gradient(135deg,rgba(10,28,74,.82),rgba(10,28,74,.6));color:#fff}
+.dock{border:0;border-top:1.5px solid rgba(255,255,255,.95);box-shadow:0 -10px 30px rgba(31,91,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.5))}
+.modal{background:rgba(10,28,74,.32);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+html.noglass .modal{background:rgba(10,28,74,.55);backdrop-filter:none;-webkit-backdrop-filter:none}
+.modal-box{background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.5));box-shadow:var(--g-edge),0 24px 60px rgba(10,28,74,.35)}
+.secret-box{background-image:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.5))}
+.bubble{box-shadow:var(--g-edge),var(--g-drop)}
+
+/* kolom isian: kaca cekung */
+.field,.input-row input{background:rgba(255,255,255,.55);border:1.5px solid var(--g-line);box-shadow:inset 0 2px 6px rgba(31,91,255,.14),inset 0 0 0 1px rgba(255,255,255,.7);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+.field:focus,.input-row input:focus{background:rgba(255,255,255,.85);box-shadow:inset 0 2px 6px rgba(31,91,255,.14),0 0 0 4px rgba(31,91,255,.22)}
+.platform-row input[type=text]{background:rgba(255,255,255,.7);border:1.5px solid var(--g-line)}
+
+/* tombol biru: kaca berwarna */
+.btn-primary,.mi-main{background:var(--g-bg-blue);border:1.5px solid rgba(255,255,255,.85);color:#fff;
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-edge-blue),0 12px 26px rgba(31,91,255,.45)}
+html.noglass .btn-primary,html.noglass .mi-main{background:var(--blue);border:2px solid var(--ink)}
+.btn-soft{background:var(--g-bg-sky);border:1.5px solid rgba(255,255,255,.9);box-shadow:var(--g-edge),0 8px 20px rgba(31,91,255,.25);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+.tab.active,.seg button.active,.dock button.active{background:var(--g-bg-blue);border-color:rgba(255,255,255,.85);color:#fff;box-shadow:var(--g-edge-blue),0 8px 18px rgba(31,91,255,.4)}
+.btn-primary::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent)}
+.btn:active,.mi:active{box-shadow:var(--g-edge),0 2px 6px rgba(31,91,255,.2)}
+.btn-primary:active,.mi-main:active{box-shadow:var(--g-edge-blue),0 3px 8px rgba(31,91,255,.35)}
+.tag{border:1.5px solid rgba(10,28,74,.25)}
+
+/* hover / fokus: kaca menyala biru */
+@media (hover:hover){
+  .mi:hover,.btn-ghost:hover,.icon-btn:hover,.tab:not(.active):hover,.download-option:hover{background:var(--g-bg-blue);color:#fff;border-color:rgba(255,255,255,.85);box-shadow:var(--g-edge-blue),0 12px 26px rgba(31,91,255,.45)}
+  .tool-card:hover,.guide-card:hover{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(180,222,255,.55));box-shadow:var(--g-edge),0 18px 40px rgba(31,91,255,.35);border-color:rgba(31,91,255,.5)}
+}
+.mi:focus-visible{background:var(--g-bg-blue);color:#fff;border-color:rgba(255,255,255,.85);box-shadow:var(--g-edge-blue),0 12px 26px rgba(31,91,255,.45)}
+.tool-card:focus-visible,.guide-card:focus-visible{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(180,222,255,.55));box-shadow:var(--g-edge),0 18px 40px rgba(31,91,255,.35)}
+.mi-main:hover,.mi-main:focus-visible{background:var(--g-bg-blue)}
+
+/* kilau kaca yang menyapu saat disentuh (desktop) */
+.mi,.tool-card{position:relative;overflow:hidden}
+.mi::after,.tool-card::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);pointer-events:none}
+@media (hover:hover){.fx .mi:hover::after,.fx .tool-card:hover::after{animation:glassSweep .8s ease}}
+@keyframes glassSweep{to{left:130%}}
+.mi{overflow:visible}.mi::after{display:none}
+.tool-card::after{border:0}
+
+/* tombol saklar tetap tegas */
+.switch .knob{border:1.5px solid var(--g-line)}
+.mascot{filter:drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink)) drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink)) drop-shadow(0 10px 14px rgba(31,91,255,.25))}

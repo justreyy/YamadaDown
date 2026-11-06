@@ -111,7 +111,7 @@ function osReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
 }
 function defaultSettings() {
-  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true };
+  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true, glass: true };
 }
 function loadSettings() {
   const base = defaultSettings();
@@ -127,7 +127,8 @@ function loadSettings() {
       confirmLeave: pick("confirmLeave", v => typeof v === "boolean"),
       textSize: pick("textSize", v => [0, 1, 2].includes(v)),
       intensity: pick("intensity", v => [0, 1, 2].includes(v)),
-      showChar: pick("showChar", v => typeof v === "boolean")
+      showChar: pick("showChar", v => typeof v === "boolean"),
+      glass: pick("glass", v => typeof v === "boolean")
     };
   } catch { return base; }
 }
@@ -256,6 +257,7 @@ function applySettings() {
   root.dataset.int = String(S.intensity);
   root.classList.toggle("fx", fancy());
   root.classList.toggle("nochar", !S.showChar);
+  root.classList.toggle("noglass", !S.glass);
 
   if (S.confirmLeave && !leaveHandler) {
     leaveHandler = e => { e.preventDefault(); e.returnValue = t("confirm.leave"); return e.returnValue; };
