@@ -207,10 +207,62 @@ window.addEventListener("storage", e => {
   if (e.key === REC_KEY) { rec = readJSON(REC_KEY, []); emit("recents"); }
 });
 
+
+// ---------------------------------------------------------------------
+// PERFORMA: mode hemat (html.lite). Pilihan pengguna: auto | lite | full.
+// AUTO = heuristik perangkat (RAM/CPU/hemat data) + uji FPS singkat setelah
+// halaman tampil. Hasil uji disimpan 7 hari agar tidak diuji ulang terus.
+// ---------------------------------------------------------------------
+const PERF_KEY = "ys_perf_v1";
+let perfPref = "auto", perfAuto = false;
+(function initPerfAuto() {
+  const c = readJSON(PERF_KEY, null);
+  if (c && typeof c.lite === "boolean" && Date.now() - c.ts < 7 * 864e5) { perfAuto = c.lite; return; }
+  const conn = navigator.connection || {};
+  const mem = navigator.deviceMemory || 8, cores = navigator.hardwareConcurrency || 8;
+  perfAuto = !!(conn.saveData || mem <= 2 || (device.isAndroid && cores <= 4 && mem <= 3));
+})();
+function applyLite(pref) {
+  if (pref) perfPref = ["auto", "lite", "full"].includes(pref) ? pref : "auto";
+  const lite = perfPref === "lite" || (perfPref === "auto" && perfAuto);
+  root.classList.toggle("lite", lite);
+  return lite;
+}
+// uji FPS: median & proporsi frame lambat selama ~40 frame
+function probeFps(frames = 45) {
+  return new Promise(resolve => {
+    const d = []; let last = 0, n = 0;
+    const step = t => {
+      if (document.hidden) return resolve(null);
+      if (last) d.push(t - last);
+      last = t;
+      if (++n < frames + 8) requestAnimationFrame(step);
+      else {
+        const s = d.slice(8).sort((a, b) => a - b);
+        const slow = s.filter(x => x > 26).length / s.length;
+        resolve({ median: s[s.length >> 1], slow });
+      }
+    };
+    requestAnimationFrame(step);
+  });
+}
+async function autoTune() {
+  if (perfPref !== "auto") return null;
+  const c = readJSON(PERF_KEY, null);
+  if (c && Date.now() - c.ts < 7 * 864e5) return null;
+  const r = await probeFps();
+  if (!r) return null;
+  const lite = r.median > 22 || r.slow > 0.35;
+  lsSet(PERF_KEY, JSON.stringify({ lite, ts: Date.now() }));
+  if (lite !== perfAuto) { perfAuto = lite; const on = applyLite(); emit("perf", { lite: on, auto: true }); }
+  return r;
+}
+
 window.YS = {
   device, on, emit, TOOLS,
   haptic, hapticSupported, setHaptic: v => { hapticOn = !!v; },
   copy, applyTheme, resolveTheme, getTheme: () => themePref, refreshStandalone,
-  favs: favApi, recents: recApi
+  favs: favApi, recents: recApi,
+  applyLite, autoTune, probeFps, isLite: () => root.classList.contains("lite")
 };
 })();

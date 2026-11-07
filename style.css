@@ -111,9 +111,9 @@ textarea.field{resize:vertical;min-height:70px}
   .btn-ghost:hover{background:var(--sky-l)}
   .btn-primary:hover{background:var(--blue-d)}
 }
-.btn::after{content:"";position:absolute;top:0;bottom:0;width:36%;left:-50%;background:rgba(255,255,255,.45);transform:skewX(-20deg)}
+.btn::after{content:"";position:absolute;top:0;bottom:0;left:0;width:36%;background:rgba(255,255,255,.45);transform:translateX(-160%) skewX(-20deg)}
 .fx .btn-primary::after{animation:btnShine 5s ease-in-out infinite}
-@keyframes btnShine{0%,75%{left:-50%}100%{left:130%}}
+@keyframes btnShine{0%,75%{transform:translateX(-160%) skewX(-20deg)}100%{transform:translateX(420%) skewX(-20deg)}}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .icon-btn{width:46px;height:46px;background:var(--paper);border:2px solid var(--ink);display:grid;place-items:center;color:var(--ink);box-shadow:3px 3px 0 var(--sky);flex:none;transform:skewX(var(--skew));transition:transform .1s,box-shadow .1s,background .15s}
 .icon-btn .i{transform:skewX(var(--unskew))}
@@ -180,7 +180,7 @@ html.nochar .mascot[data-secret][data-size="xl"]{--ms:84px}
 .fx .m-shadow{animation:mShadow 4.2s ease-in-out infinite}
 .fx .m-lid-l,.fx .m-lid-r{animation:mBlink 5.2s infinite}
 .fx .m-lid-r{animation-delay:.02s}
-.fx .m-shine{animation:mShine 7s ease-in-out infinite}
+.fx .mascot[data-size="xl"] .m-shine{animation:mShine 7s ease-in-out infinite}
 .fx .mascot[data-mood="happy"] .m-body{animation:mHappy 1.5s ease-in-out infinite}
 .fx .mascot[data-mood="happy"] .fx-spark{animation:mSpark 1.6s ease-in-out infinite}
 .fx .mascot[data-mood="happy"] .fx-s2{animation-delay:.5s}.fx .mascot[data-mood="happy"] .fx-s3{animation-delay:1s}
@@ -221,7 +221,7 @@ html.nochar .mascot[data-secret][data-size="xl"]{--ms:84px}
 
 
 /* ====== Maskot: potret miring dengan garis tinta ====== */
-.mascot{filter:drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink)) drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink))}
+.m-head::before{content:"";position:absolute;inset:-2.5px;clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);background:var(--ink);pointer-events:none}
 .m-disc{border-radius:0;border:0;box-shadow:none;clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);background:var(--sky-l)}
 .m-shadow{display:none}
 .mascot[data-size="xs"]{--ms:46px}
@@ -232,7 +232,7 @@ html.nochar .mascot[data-secret][data-size="xl"]{--ms:84px}
 
 .portrait{position:relative;display:inline-grid;padding:0 18px 18px 0}
 .portrait::before{content:"";position:absolute;inset:0;transform:translate(18px,18px);clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);
-  background:repeating-linear-gradient(115deg,var(--blue) 0 12px,#3d7bff 12px 18px);filter:drop-shadow(0 0 0 var(--ink))}
+  background:repeating-linear-gradient(115deg,var(--blue) 0 12px,#3d7bff 12px 18px)}
 .portrait::after{content:"";position:absolute;left:-14px;top:14%;width:7px;height:46%;background:var(--ink);transform:skewX(var(--skew))}
 
 /* ====== Kotak dialog ala visual novel ====== */
@@ -668,7 +668,7 @@ html[data-rm="on"] .btn,html[data-rm="on"] .tool-card,html[data-rm="on"] .mi{tra
   --g-bg:linear-gradient(135deg,rgba(255,255,255,.74),rgba(255,255,255,.28) 55%,rgba(255,255,255,.5));
   --g-bg-blue:linear-gradient(135deg,rgba(60,120,255,.95),rgba(31,91,255,.78) 55%,rgba(110,170,255,.85));
   --g-bg-sky:linear-gradient(135deg,rgba(190,226,255,.9),rgba(143,208,255,.55));
-  --g-blur:blur(18px) saturate(1.8);
+  --g-blur:blur(12px) saturate(1.6);
   --g-edge:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 0 0 1px rgba(255,255,255,.55),inset 0 -3px 8px rgba(31,91,255,.10),inset 10px 10px 26px rgba(255,255,255,.35);
   --g-edge-blue:inset 0 2px 0 rgba(255,255,255,.65),inset 0 0 0 1px rgba(255,255,255,.35),inset 0 -4px 10px rgba(10,28,74,.28);
   --g-drop:0 12px 30px rgba(31,91,255,.20),0 2px 6px rgba(10,28,74,.10);
@@ -681,11 +681,11 @@ html.noglass{--g-bg:#fff;--g-bg-sky:var(--sky-l);--g-blur:none}
   radial-gradient(60vmax 50vmax at 14% 22%,rgba(110,175,255,.55),transparent 62%),
   radial-gradient(52vmax 46vmax at 88% 72%,rgba(31,91,255,.34),transparent 62%),
   radial-gradient(40vmax 36vmax at 62% 8%,rgba(143,208,255,.6),transparent 62%),#fff}
-.orb{position:absolute;border-radius:50%;filter:blur(8px);opacity:.8}
-.orb.o1{width:44vmin;height:44vmin;left:6%;top:30%;background:radial-gradient(circle at 35% 30%,#fff,var(--sky) 45%,rgba(31,91,255,.7))}
-.orb.o2{width:30vmin;height:30vmin;right:10%;top:8%;background:radial-gradient(circle at 35% 30%,#fff,#9fd4ff 45%,rgba(31,91,255,.55))}
-.fx .orb.o1{animation:orbA 16s ease-in-out infinite}
-.fx .orb.o2{animation:orbB 20s ease-in-out infinite}
+.orb{position:absolute;border-radius:50%;opacity:.8;will-change:transform}
+.orb.o1{width:50vmin;height:50vmin;left:4%;top:28%;background:radial-gradient(circle closest-side,rgba(255,255,255,.95),rgba(143,208,255,.75) 45%,rgba(31,91,255,.35) 75%,transparent 100%)}
+.orb.o2{width:36vmin;height:36vmin;right:8%;top:6%;background:radial-gradient(circle closest-side,rgba(255,255,255,.9),rgba(159,212,255,.7) 45%,rgba(31,91,255,.3) 75%,transparent 100%)}
+.fx .orb.o1{width:50vmin;height:50vmin;left:4%;top:28%;background:radial-gradient(circle closest-side,rgba(255,255,255,.95),rgba(143,208,255,.75) 45%,rgba(31,91,255,.35) 75%,transparent 100%)}
+.fx .orb.o2{width:36vmin;height:36vmin;right:8%;top:6%;background:radial-gradient(circle closest-side,rgba(255,255,255,.9),rgba(159,212,255,.7) 45%,rgba(31,91,255,.3) 75%,transparent 100%)}
 @keyframes orbA{0%,100%{transform:translate(0,0)}50%{transform:translate(calc(var(--amp)*7vmin),calc(var(--amp)*-5vmin))}}
 @keyframes orbB{0%,100%{transform:translate(0,0)}50%{transform:translate(calc(var(--amp)*-6vmin),calc(var(--amp)*6vmin))}}
 html.noglass .orb{display:none}
@@ -736,12 +736,11 @@ html.noglass .btn-primary,html.noglass .mi-main{background:var(--blue);border:2p
 
 /* kilau kaca yang menyapu saat disentuh (desktop) */
 .mi,.tool-card{position:relative;overflow:hidden}
-.mi::after,.tool-card::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);pointer-events:none}
+.mi::after,.tool-card::after{content:"";position:absolute;top:0;bottom:0;left:0;width:30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-140%) skewX(-18deg);pointer-events:none}
 @media (hover:hover){.fx .mi:hover::after,.fx .tool-card:hover::after{animation:glassSweep .8s ease}}
-@keyframes glassSweep{to{left:130%}}
+@keyframes glassSweep{to{transform:translateX(430%) skewX(-18deg)}}
 .mi{overflow:visible}.mi::after{display:none}
 .tool-card::after{border:0}
 
 /* tombol saklar tetap tegas */
 .switch .knob{border:1.5px solid var(--g-line)}
-.mascot{filter:drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink)) drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink)) drop-shadow(0 10px 14px rgba(31,91,255,.25))}

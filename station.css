@@ -250,3 +250,34 @@ html.noglass .ctl-tile{background:var(--sky-l)}
   .ios-ind,.island,.isl-body,.ctl-panel,.ctl-back,.fav-btn{transition-duration:.01ms!important;animation:none!important}
 }
 html[data-rm="on"] .ios-ind,html[data-rm="on"] .island,html[data-rm="on"] .isl-body,html[data-rm="on"] .ctl-panel{transition-duration:.01ms!important}
+
+/* =====================================================================
+   PERFORMA — blur hanya di elemen kecil yang tetap (dock, nav, sheet).
+   Semua kartu/panel/tombol memakai latar translusen biasa: tampilan kaca
+   sama, tetapi tidak perlu menghitung ulang blur setiap frame scroll.
+   ===================================================================== */
+.panel,.bubble,.tool-card,.guide-card,.result-box,.scene-card,.big-notice-box,.wa-notice,.tip,.chip,.sys,.stat,.cfg li,.platform-row,
+.download-option,.icon-btn,.tab,.seg button,.mi,.btn-ghost,.btn-soft,.btn-primary,.mi-main,.segbar,.toast,.field,.input-row input,
+.copy-btn,.recent-item,.recent-clear,.ptr,.ctl-tile,.modal-box{-webkit-backdrop-filter:none;backdrop-filter:none}
+.panel,.tool-card,.guide-card,.result-box{background-color:rgba(255,255,255,.35)}
+html[data-theme="dark"] .panel,html[data-theme="dark"] .tool-card,html[data-theme="dark"] .guide-card,html[data-theme="dark"] .result-box{background-color:rgba(10,20,52,.3)}
+
+/* tab di latar belakang / dialog penuh: hentikan animasi tak terlihat */
+html.paused *,html.paused *::before,html.paused *::after{animation-play-state:paused!important}
+
+/* ---------- MODE HEMAT (html.lite): untuk HP/PC yang lambat ---------- */
+html.lite{--g-blur:none;--g-drop:0 3px 8px rgba(10,28,74,.12)}
+html.lite .orb,html.lite .bg-blob{display:none}
+html.lite .bg::after{display:none}
+html.lite .dock,html.lite .ios-nav,html.lite .ctl-panel,html.lite .modal{-webkit-backdrop-filter:none;backdrop-filter:none}
+html.lite .dock{background:var(--paper)}
+html.lite .ios-nav{background:var(--paper)}
+html.lite .ctl-panel{background:var(--paper)}
+html.lite .modal{background:rgba(10,28,74,.55)}
+html.lite .btn::after,html.lite .mi::after,html.lite .tool-card::after{display:none}
+html.lite .m-shine,html.lite .glitch-title{animation:none!important}
+html.lite .fx .bubble::after,html.lite .fx .hl::before{animation:none}
+html.lite *{text-shadow:none}
+html.lite .panel,html.lite .tool-card,html.lite .guide-card,html.lite .result-box{box-shadow:var(--g-edge),var(--g-drop)}
+html.lite .island,html.lite .toast{box-shadow:0 4px 12px rgba(0,0,0,.3)}
+html.lite .screen{scroll-behavior:auto}

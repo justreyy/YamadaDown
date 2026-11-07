@@ -112,7 +112,7 @@ function osReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
 }
 function defaultSettings() {
-  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true, glass: true, theme: "auto", haptic: true };
+  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true, glass: true, theme: "auto", haptic: true, perf: "auto" };
 }
 function loadSettings() {
   const base = defaultSettings();
@@ -131,7 +131,8 @@ function loadSettings() {
       showChar: pick("showChar", v => typeof v === "boolean"),
       glass: pick("glass", v => typeof v === "boolean"),
       theme: pick("theme", v => v === "auto" || v === "light" || v === "dark"),
-      haptic: pick("haptic", v => typeof v === "boolean")
+      haptic: pick("haptic", v => typeof v === "boolean"),
+      perf: pick("perf", v => v === "auto" || v === "lite" || v === "full")
     };
   } catch { return base; }
 }
@@ -262,7 +263,7 @@ function applySettings() {
   root.classList.toggle("fx", fancy());
   root.classList.toggle("nochar", !S.showChar);
   root.classList.toggle("noglass", !S.glass);
-  if (window.YS) { YS.applyTheme(S.theme); YS.setHaptic(S.haptic); }
+  if (window.YS) { YS.applyTheme(S.theme); YS.setHaptic(S.haptic); YS.applyLite(S.perf); }
 
   if (S.confirmLeave && !leaveHandler) {
     leaveHandler = e => { e.preventDefault(); e.returnValue = t("confirm.leave"); return e.returnValue; };
@@ -469,7 +470,7 @@ function toolCardHTML(id, n, topId) {
   return `
       <button class="tool-card${off ? " is-disabled" : ""}" data-tool="${id}" type="button" ${off ? 'aria-disabled="true"' : ""}>
         <span class="idx">0${n + 1}</span>
-        <img class="ico" src="${TOOL_META[id].icon}" alt="" width="62" height="62">
+        <img class="ico" src="${TOOL_META[id].icon}" alt="" width="62" height="62" decoding="async">
         <span class="fav-btn${fav ? " on" : ""}" role="button" tabindex="0" data-fav="${id}" aria-pressed="${fav}" aria-label="${escapeAttr(t("ys.favBtn"))}">${icon("star")}</span>
         <span class="info">
           <span class="name">${escapeHtml(toolName(id))}</span>
@@ -483,12 +484,14 @@ function renderToolList() {
   const list = $("#toolList"); if (!list) return;
   const ids = sortedToolIds();
   const topId = ids[0] && (popularity[ids[0]] || 0) > 0 ? ids[0] : null;
-  list.innerHTML = ids.map((id, n) => toolCardHTML(id, n, topId)).join("");
+  const html = ids.map((id, n) => toolCardHTML(id, n, topId)).join("");
+  if (list.__h !== html) { list.__h = html; list.innerHTML = html; }
 }
 function renderFavorites() {
   const list = $("#favList"); if (!list) return;
   const ids = window.YS ? YS.favs.list().filter(id => TOOL_META[id]) : [];
-  list.innerHTML = ids.map((id, n) => toolCardHTML(id, n, null)).join("");
+  const html = ids.map((id, n) => toolCardHTML(id, n, null)).join("");
+  if (list.__h !== html) { list.__h = html; list.innerHTML = html; }
   $("#favEmpty").hidden = ids.length > 0;
 }
 function timeAgo(ts) {
@@ -883,7 +886,7 @@ $$('input[data-setting]').forEach(inp => inp.addEventListener("change", () => ch
 $$('.seg[data-setting]').forEach(seg => seg.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const key = seg.dataset.setting;
-  const v = (key === "lang" || key === "theme") ? b.dataset.value : Number(b.dataset.value);
+  const v = (key === "lang" || key === "theme" || key === "perf") ? b.dataset.value : Number(b.dataset.value);
   changeSetting(key, v);
 }));
 

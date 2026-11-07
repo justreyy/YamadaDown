@@ -187,6 +187,14 @@ document.addEventListener("touchend", async e => {
 }, { passive: true });
 document.addEventListener("touchcancel", () => { if (g && g.mode === "ptr") endPull(false); g = null; }, { passive: true });
 
+// ---- Performa: jeda animasi saat tab tersembunyi; uji FPS otomatis setelah menu tampil
+document.addEventListener("visibilitychange", () => root.classList.toggle("paused", document.hidden));
+(function scheduleTune() {
+  const wait = () => { if ($("#loading")) return setTimeout(wait, 500); setTimeout(() => YS.autoTune(), 1500); };
+  if (document.readyState === "complete") wait(); else window.addEventListener("load", wait, { once: true });
+})();
+YS.on("perf", d => { if (d.lite && d.auto) YD.showToast(t("ys.perfAutoOn")); });
+
 // ---- Escape menutup dialog install
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !installDlg.hidden) openInstall(false); });
 

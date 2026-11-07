@@ -17,7 +17,8 @@
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&family=Inter:wght@400;500;600&family=Orbitron:wght@600;700;900&family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&family=Inter:wght@400;500;600&family=Orbitron:wght@600;700;900&family=Rajdhani:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&family=Inter:wght@400;500;600&family=Orbitron:wght@600;700;900&family=Rajdhani:wght@500;600;700&display=swap"></noscript>
   <link rel="preload" as="image" href="assets/ryo.webp">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/station.css">
@@ -296,6 +297,14 @@
             <button type="button" data-value="dark" data-i18n="ys.dark">GELAP</button>
           </div>
         </div>
+        <div class="opt col">
+          <div class="opt-text"><svg class="i"><use href="#i-pulse"/></svg><div><span data-i18n="ys.perf">Performa</span><small data-i18n="ys.perfHint"></small></div></div>
+          <div class="seg seg-full" data-setting="perf">
+            <button type="button" data-value="auto" data-i18n="ys.perfAuto">AUTO</button>
+            <button type="button" data-value="lite" data-i18n="ys.perfLite">HEMAT</button>
+            <button type="button" data-value="full" data-i18n="ys.perfFull">PENUH</button>
+          </div>
+        </div>
         <div class="opt" id="fsRow">
           <div class="opt-text"><svg class="i"><use href="#i-expand"/></svg><div><span data-i18n="ys.fullscreen">Layar penuh</span><small id="fsHint" data-i18n="ys.fullscreenHint"></small></div></div>
           <label class="switch"><input type="checkbox" id="fsToggle"><span class="knob"></span></label>
@@ -541,9 +550,9 @@
   <div class="big-notice-box"><svg class="i"><use href="#i-check"/></svg><p id="bigNoticeText"></p></div>
 </div>
 
-<script src="/content.js"></script>
-<script src="/station-core.js"></script>
-<script src="/app.js"></script>
-<script src="/station-ui.js"></script>
+<script src="/content.js" defer></script>
+<script src="/station-core.js" defer></script>
+<script src="/app.js" defer></script>
+<script src="/station-ui.js" defer></script>
 </body>
 </html>
