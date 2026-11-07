@@ -1,8 +1,9 @@
 /* YAMADA DOWN service worker: cache cangkang aplikasi agar bisa dibuka
-   seperti app. /api/* TIDAK PERNAH di-cache. */
-const CACHE = "yamada-down-v6.0.0";
+   seperti app, termasuk offline (GUIDE ada di content.js yang ikut ter-cache).
+   /api/* TIDAK PERNAH di-cache; tidak ada data pengguna yang disimpan di sini. */
+const CACHE = "yamada-down-v7.0.0";
 const SHELL = [
-  "/", "/index.html", "/style.css", "/app.js", "/content.js", "/manifest.webmanifest",
+  "/", "/index.html", "/offline.html", "/style.css", "/station.css", "/app.js", "/station-core.js", "/station-ui.js", "/content.js", "/manifest.webmanifest",
   "/assets/ryo.webp", "/assets/ryo-sm.webp", "/assets/icon-192.png", "/assets/icon-512.png",
   "/LOGO.jpg", "/Youtube.jpg", "/Tiktok.jpg", "/Instagram.jpg", "/Pinterest.jpg", "/iPhone.jpg"
 ];
@@ -22,7 +23,7 @@ self.addEventListener("fetch", e => {
   const isFont = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (!sameOrigin && !isFont) return;
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).catch(() => caches.match("/index.html")));
+    e.respondWith(fetch(req).catch(() => caches.match("/index.html").then(r => r || caches.match("/")).then(r => r || caches.match("/offline.html"))));
     return;
   }
   e.respondWith(

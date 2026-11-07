@@ -23,3 +23,15 @@ Di main menu, ketuk Ryo 7 kali (jeda antar ketukan maksimal 2 detik) lalu tekan 
 - Link WhatsApp/CS: `CONFIG` di `app.js` (CS juga bisa diubah dari Panel Admin > SITE)
 - Teks & tutorial: `content.js`
 - Warna: variabel di atas `style.css`
+
+## Fitur Station (v7)
+
+**Semua perangkat:** Install App (panduan sesuai perangkat), mode offline (GUIDE + halaman utama + indikator OFFLINE), Recently Used (5 tools terakhir, bisa dihapus), Favorites (halaman khusus, localStorage), swipe antar menu, pull-to-refresh, tema AUTO/TERANG/GELAP, tombol Copy di hasil tools, mode layar penuh (jika browser mendukung), safe area (notch/home indicator).
+
+**Khusus iPhone** (elemen dibuat lewat JS hanya jika perangkat terdeteksi iPhone): bottom navigation, Dynamic Island (status API/server, notifikasi, aktivitas tools; tekan lama = Quick Control), Quick Control Panel, Native Share (fallback salin link), Haptic Feedback.
+
+**Catatan teknis**
+- Deteksi perangkat: `station-core.js` (userAgentData, UA, maxTouchPoints + ukuran layar; iPad yang menyamar sebagai Mac tetap terdeteksi iPad).
+- Endpoint baru `/api/health` (publik, ringan, tanpa data konfigurasi).
+- Riwayat hanya menyimpan id tool + waktu (tanpa URL). `/api/*` tidak pernah di-cache oleh service worker.
+- Haptic di iPhone memakai trik `<input switch>` (iOS 17.4+). Di iOS lebih lama tidak ada getaran, tanpa error.

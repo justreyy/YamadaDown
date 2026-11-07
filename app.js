@@ -17,7 +17,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-const VERSION = "6.0.0";
+const VERSION = "7.0.0";
 
 const CONFIG = {
   whatsappChannel: "https://whatsapp.com/channel/0029Vb87O3oF6smw9uLgOD0U",
@@ -81,6 +81,7 @@ function showToast(message) {
   const el = $("#toast");
   el.textContent = message;
   el.classList.add("show");
+  window.dispatchEvent(new CustomEvent("yd:toast", { detail: { message } }));
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
 }
@@ -111,7 +112,7 @@ function osReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
 }
 function defaultSettings() {
-  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true, glass: true };
+  return { lang: "id", sound: true, anim: true, reduced: osReducedMotion(), confirmLeave: false, textSize: 1, intensity: 1, showChar: true, glass: true, theme: "auto", haptic: true };
 }
 function loadSettings() {
   const base = defaultSettings();
@@ -128,7 +129,9 @@ function loadSettings() {
       textSize: pick("textSize", v => [0, 1, 2].includes(v)),
       intensity: pick("intensity", v => [0, 1, 2].includes(v)),
       showChar: pick("showChar", v => typeof v === "boolean"),
-      glass: pick("glass", v => typeof v === "boolean")
+      glass: pick("glass", v => typeof v === "boolean"),
+      theme: pick("theme", v => v === "auto" || v === "light" || v === "dark"),
+      haptic: pick("haptic", v => typeof v === "boolean")
     };
   } catch { return base; }
 }
@@ -177,6 +180,7 @@ function tone(freq, dur, { type = "sine", vol = 0.05, delay = 0, to = 0 } = {}) 
   o.start(t0); o.stop(t0 + dur + 0.02);
 }
 function sfx(name, step = 0) {
+  if (window.YS && (name === "success" || name === "error")) YS.haptic(name);
   if (!S.sound) return;
   try {
     switch (name) {
@@ -258,6 +262,7 @@ function applySettings() {
   root.classList.toggle("fx", fancy());
   root.classList.toggle("nochar", !S.showChar);
   root.classList.toggle("noglass", !S.glass);
+  if (window.YS) { YS.applyTheme(S.theme); YS.setHaptic(S.haptic); }
 
   if (S.confirmLeave && !leaveHandler) {
     leaveHandler = e => { e.preventDefault(); e.returnValue = t("confirm.leave"); return e.returnValue; };
@@ -267,13 +272,16 @@ function applySettings() {
     leaveHandler = null;
   }
   syncSettingControls();
+  window.dispatchEvent(new CustomEvent("yd:settings"));
 }
 function rerenderTexts() {
   applyI18n();
   applySiteSettingsToUI(siteSettings);
   renderToolList();
+  renderFavorites();
   renderGuideList();
   if (current === "tool") refreshToolTexts();
+  window.dispatchEvent(new CustomEvent("yd:lang"));
   if (guideRun && !$("#guideRun").hidden) renderGuideStep(false);
   refreshSystemStatus();
   renderCfgAndStats();
@@ -291,8 +299,9 @@ function changeSetting(key, value) {
 // ---------------------------------------------------------------------
 // Navigasi antar layar
 // ---------------------------------------------------------------------
-const SCREENS = ["menu", "tools", "tool", "guide", "setting", "admin"];
-const DOCK_SCREENS = new Set(["tools", "tool", "guide", "setting"]);
+const SCREENS = ["menu", "tools", "tool", "favorites", "guide", "setting", "admin"];
+const DOCK_SCREENS = new Set(["tools", "tool", "favorites", "guide", "setting"]);
+const NAV_ORDER = ["menu", "tools", "guide", "setting"];
 let current = null, navLock = false, histIdx = 0, adminAllowed = false, toolId = null;
 
 function show(name, { dir = "fwd", tool } = {}) {
@@ -309,7 +318,7 @@ function show(name, { dir = "fwd", tool } = {}) {
 
   const dock = $("#dock");
   dock.hidden = !DOCK_SCREENS.has(name);
-  const navTarget = name === "tool" ? "tools" : name;
+  const navTarget = (name === "tool" || name === "favorites") ? "tools" : name;
   $$("[data-nav]", dock).forEach(b => b.classList.toggle("active", b.dataset.nav === navTarget));
 
   // Maintenance menutup layar pengunjung, tapi tidak halaman admin.
@@ -317,21 +326,23 @@ function show(name, { dir = "fwd", tool } = {}) {
   else if (maintenanceSettings.enabled) showMaintenanceOverlay(maintenanceSettings.message);
 
   if (name === "menu") onEnterMenu(prev);
-  if (name === "tools") renderToolList();
+  if (name === "tools") { renderToolList(); renderRecent(); }
+  if (name === "favorites") renderFavorites();
   if (name === "tool") openToolView(toolId);
   if (name === "guide") showGuideList(false);
   if (name === "setting") { const m = $("#settingMascot"); act(m, "nod"); gearPop(m); }
   if (name === "admin") onEnterAdmin();
+  window.dispatchEvent(new CustomEvent("yd:screen", { detail: { name, dir, prev } }));
 }
 
-function go(name, { replace = false, tool, wipe = false, delay = 0 } = {}) {
+function go(name, { replace = false, tool, wipe = false, delay = 0, dir = "fwd" } = {}) {
   if (navLock) return;
   if (name === current && name !== "tool") return;
   navLock = true;
   const swap = () => {
     const st = { i: replace ? histIdx : ++histIdx, s: name, t: tool || toolId };
     try { replace ? history.replaceState(st, "") : history.pushState(st, ""); } catch { /* no-op */ }
-    show(name, { dir: "fwd", tool });
+    show(name, { dir, tool });
     setTimeout(() => { navLock = false; }, 120);
   };
   if (wipe && fancy()) {
@@ -343,6 +354,10 @@ function go(name, { replace = false, tool, wipe = false, delay = 0 } = {}) {
   } else {
     setTimeout(swap, delay ? Math.min(delay, 140) : 0);
   }
+}
+function navDir(to) {
+  const a = NAV_ORDER.indexOf(current === "tool" || current === "favorites" ? "tools" : current), b = NAV_ORDER.indexOf(to);
+  return a >= 0 && b >= 0 && b < a ? "back" : "fwd";
 }
 function goBack() {
   if (navLock) return;
@@ -360,7 +375,7 @@ window.addEventListener("popstate", e => {
 
 document.addEventListener("click", e => {
   const dockBtn = e.target.closest("#dock [data-go]");
-  if (dockBtn) { go(dockBtn.dataset.go, { replace: true }); return; }
+  if (dockBtn) { go(dockBtn.dataset.go, { replace: true, dir: navDir(dockBtn.dataset.go) }); return; }
   const menuBtn = e.target.closest("[data-go][data-act]");
   if (menuBtn) {
     const mascot = $("#screen-menu .mascot");
@@ -372,7 +387,10 @@ document.addEventListener("click", e => {
     return;
   }
   if (e.target.closest("[data-back]")) { goBack(); return; }
-  const card = e.target.closest(".tool-card[data-tool]");
+  const fav = e.target.closest("[data-fav]");
+  if (fav) { e.preventDefault(); toggleFav(fav.dataset.fav); return; }
+  if (e.target.closest("#recentClear")) { YS.recents.clear(); renderRecent(); showToast(t("ys.recentCleared")); sfx("click"); return; }
+  const card = e.target.closest(".tool-card[data-tool], .recent-item[data-tool]");
   if (card) { openToolFromCard(card.dataset.tool); }
 });
 
@@ -383,13 +401,14 @@ document.addEventListener("click", e => {
 function kbItems() {
   const scr = $("#screen-" + current); if (!scr || scr.hidden) return [];
   const sel = {
-    menu: ".mi", tools: ".tool-card", guide: ".guide-card, #guidePrev, #guideNext",
+    menu: ".mi", tools: ".tool-card, .recent-item", favorites: ".tool-card", guide: ".guide-card, #guidePrev, #guideNext",
     setting: ".tab, .pane.active .switch input, .pane.active .seg button, .pane.active .btn", tool: "#videoUrl, #pasteBtn, #downloadBtn, .download-option",
     admin: ".tab, .pane.active .btn"
   }[current];
   return sel ? $$(sel, scr).filter(el => el.offsetParent !== null) : [];
 }
 document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-fav]")) { e.preventDefault(); toggleFav(e.target.dataset.fav); return; }
   if (e.target.matches("input[type=text],input[type=url],input[type=password],textarea")) {
     if (e.key === "Escape") e.target.blur();
     return;
@@ -439,21 +458,19 @@ function toolName(id) {
 function sortedToolIds() {
   return TOOL_ORDER.slice().sort((a, b) => (popularity[b] || 0) - (popularity[a] || 0) || TOOL_ORDER.indexOf(a) - TOOL_ORDER.indexOf(b));
 }
-function renderToolList() {
-  const list = $("#toolList"); if (!list) return;
-  const ids = sortedToolIds();
-  const topId = ids[0] && (popularity[ids[0]] || 0) > 0 ? ids[0] : null;
-  list.innerHTML = ids.map((id, n) => {
-    const s = platformSettings[id] || DEFAULT_PLATFORM_SETTINGS[id];
-    const off = s.enabled === false;
-    const tags = off
-      ? `<span class="tag tag-off">${t("tools.disabled")}</span>`
-      : `<span class="tag tag-ok">${t("tools.available")}</span>` +
-        (id === topId ? `<span class="tag tag-pop">${icon("flame")}${t("tools.popular")}</span>` : "");
-    return `
+function toolCardHTML(id, n, topId) {
+  const s = platformSettings[id] || DEFAULT_PLATFORM_SETTINGS[id];
+  const off = s.enabled === false;
+  const fav = !!(window.YS && YS.favs.has(id));
+  const tags = off
+    ? `<span class="tag tag-off">${t("tools.disabled")}</span>`
+    : `<span class="tag tag-ok">${t("tools.available")}</span>` +
+      (id === topId ? `<span class="tag tag-pop">${icon("flame")}${t("tools.popular")}</span>` : "");
+  return `
       <button class="tool-card${off ? " is-disabled" : ""}" data-tool="${id}" type="button" ${off ? 'aria-disabled="true"' : ""}>
         <span class="idx">0${n + 1}</span>
         <img class="ico" src="${TOOL_META[id].icon}" alt="" width="62" height="62">
+        <span class="fav-btn${fav ? " on" : ""}" role="button" tabindex="0" data-fav="${id}" aria-pressed="${fav}" aria-label="${escapeAttr(t("ys.favBtn"))}">${icon("star")}</span>
         <span class="info">
           <span class="name">${escapeHtml(toolName(id))}</span>
           <span class="desc">${escapeHtml(t("tool." + id + ".desc"))}</span>
@@ -461,7 +478,53 @@ function renderToolList() {
         </span>
         <span class="btn btn-primary open">${t("btn.open")}</span>
       </button>`;
-  }).join("");
+}
+function renderToolList() {
+  const list = $("#toolList"); if (!list) return;
+  const ids = sortedToolIds();
+  const topId = ids[0] && (popularity[ids[0]] || 0) > 0 ? ids[0] : null;
+  list.innerHTML = ids.map((id, n) => toolCardHTML(id, n, topId)).join("");
+}
+function renderFavorites() {
+  const list = $("#favList"); if (!list) return;
+  const ids = window.YS ? YS.favs.list().filter(id => TOOL_META[id]) : [];
+  list.innerHTML = ids.map((id, n) => toolCardHTML(id, n, null)).join("");
+  $("#favEmpty").hidden = ids.length > 0;
+}
+function timeAgo(ts) {
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (m < 1) return t("ys.justNow");
+  if (m < 60) return t("ys.minAgo", { n: m });
+  const h = Math.round(m / 60);
+  if (h < 24) return t("ys.hrAgo", { n: h });
+  return t("ys.dayAgo", { n: Math.round(h / 24) });
+}
+function renderRecent() {
+  const box = $("#recentBox"); if (!box || !window.YS) return;
+  const items = YS.recents.top(5);
+  if (!items.length) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="recent-h"><span class="label">${icon("clock")} ${t("ys.recent")}</span>
+      <button class="recent-clear" id="recentClear" type="button">${icon("trash")}<span>${t("ys.recentClear")}</span></button></div>
+    <div class="recent-list">${items.map(it => `
+      <button class="recent-item" type="button" data-tool="${it.id}" title="${escapeAttr(t("ys.recentOpen"))}">
+        <img src="${TOOL_META[it.id].icon}" alt="" width="34" height="34">
+        <span class="r-txt"><b>${escapeHtml(toolName(it.id))}</b><small>${escapeHtml(timeAgo(it.ts))} • ${escapeHtml(t("ys.recentUses", { n: it.count }))}</small></span>
+      </button>`).join("")}</div>`;
+}
+function syncToolFav() {
+  const b = $("#toolFav"); if (!b || !window.YS) return;
+  const on = YS.favs.has(toolId);
+  b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+}
+function toggleFav(id) {
+  if (!window.YS || !TOOL_META[id]) return;
+  const on = YS.favs.toggle(id);
+  sfx("toggle"); YS.haptic("select");
+  showToast(t(on ? "ys.favAdd" : "ys.favDel"));
+  renderToolList(); renderFavorites(); syncToolFav();
+  const fb = $(`#toolList [data-fav="${id}"]`); if (fb && fancy()) { fb.classList.add("pop"); setTimeout(() => fb.classList.remove("pop"), 400); }
 }
 async function loadPopularity() {
   try {
@@ -507,6 +570,9 @@ function openToolView(id) {
   const box = $("#resultBox"); box.hidden = true; box.className = "result-box";
   $("#downloadBtn").dataset.activeTool = id; // dipakai getActiveDownloadEndpoint()
   setToolBubble("tool.idle", "explain");
+  if (window.YS) YS.recents.add(id);
+  syncToolFav();
+  window.dispatchEvent(new CustomEvent("yd:tool", { detail: { tool: id } }));
   trackEvent({ event: "tool", tool: id });
 }
 async function pasteUrl() {
@@ -517,7 +583,8 @@ async function pasteUrl() {
     showToast(t("tool.pasted"));
     act($("#toolMascot"), "nod");
   } catch {
-    showToast(t("tool.pasteFail"));
+    const inp = $("#videoUrl"); inp.focus();
+    showToast(t("ys.pasteHint"));
   }
 }
 function getActivePlatform() { return $("#downloadBtn")?.dataset.activeTool || ""; }
@@ -543,6 +610,15 @@ async function downloadVideo() {
     return;
   }
 
+  if (navigator.onLine === false) {
+    box.hidden = false; box.className = "result-box error";
+    box.innerHTML = `<strong>${t("ys.offline")}</strong><br>${t("ys.offlineBlock")}`;
+    setToolBubble("tool.fail", "confused"); sfx("error");
+    return;
+  }
+  const actTool = getActivePlatform();
+  const emitAct = state => window.dispatchEvent(new CustomEvent("yd:activity", { detail: { state, tool: actTool, name: toolName(actTool) } }));
+  emitAct("start");
   setDownloadBtn(true);
   box.hidden = false;
   box.className = "result-box loading";
@@ -566,6 +642,8 @@ async function downloadVideo() {
       throw new Error(data.error || t("tool.errTitle"));
     }
     renderDownloadResult(data);
+    if (window.YS) YS.recents.markOk(actTool);
+    emitAct("ok");
     setToolBubble("tool.success", "happy"); sfx("success");
     act($("#toolMascot"), "jump");
     box.scrollIntoView({ behavior: S.reduced || !S.anim ? "auto" : "smooth", block: "nearest" });
@@ -573,6 +651,7 @@ async function downloadVideo() {
     console.error("Download error:", error);
     box.className = "result-box error";
     box.innerHTML = `<strong>${t("tool.errTitle")}</strong><br>${escapeHtml(error.message)}<br><small>${t("tool.errHint")}</small>`;
+    emitAct("fail");
     setToolBubble("tool.fail", "confused"); sfx("error");
   } finally {
     setDownloadBtn(false);
@@ -599,11 +678,15 @@ function renderDownloadResult(data) {
     <div class="result-pick">${t("tool.pickFormat").toUpperCase()}</div>
     <div class="download-list">
       ${items.map((item, index) => `
-        <button type="button" class="download-option" data-media-index="${index}">
-          <span>${escapeHtml(item.type || "Media")}${item.quality ? ` • ${escapeHtml(item.quality)}` : ""}</span>
-          <span class="go">${t("btn.download")} ${icon("download")}</span>
-        </button>`).join("")}
-    </div>`;
+        <div class="opt-row">
+          <button type="button" class="download-option" data-media-index="${index}">
+            <span>${escapeHtml(item.type || "Media")}${item.quality ? ` • ${escapeHtml(item.quality)}` : ""}</span>
+            <span class="go">${t("btn.download")} ${icon("download")}</span>
+          </button>
+          <button type="button" class="copy-btn" data-copy="${escapeAttr(item.url)}" aria-label="${escapeAttr(t("ys.copyLink"))}" title="${escapeAttr(t("ys.copyLink"))}">${icon("copy")}</button>
+        </div>`).join("")}
+    </div>
+    ${data.title ? `<button type="button" class="btn btn-soft btn-sm copy-title" data-copy="${escapeAttr(data.title)}">${icon("copy")}<span>${t("ys.copyTitle")}</span></button>` : ""}`;
 
   $$(".download-option[data-media-index]", box).forEach(button => {
     button.addEventListener("click", () => {
@@ -646,6 +729,7 @@ async function downloadSelectedMedia(originalUrl, mediaIndex, title, extension, 
 
     showToast(t("tool.started"));
     showBigNotice(t("tool.bigDone"));
+    window.dispatchEvent(new CustomEvent("yd:activity", { detail: { state: "ok", tool: getActivePlatform(), name: toolName(getActivePlatform()) } }));
     sfx("success");
   } catch (error) {
     console.error("Download error:", error);
@@ -799,7 +883,7 @@ $$('input[data-setting]').forEach(inp => inp.addEventListener("change", () => ch
 $$('.seg[data-setting]').forEach(seg => seg.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const key = seg.dataset.setting;
-  const v = key === "lang" ? b.dataset.value : Number(b.dataset.value);
+  const v = (key === "lang" || key === "theme") ? b.dataset.value : Number(b.dataset.value);
   changeSetting(key, v);
 }));
 
@@ -1099,10 +1183,9 @@ $("#maintenanceRetryBtn").addEventListener("click", async () => {
 // ---------------------------------------------------------------------
 let batteryRef = null;
 function refreshSystemStatus() {
-  const ua = navigator.userAgent || "";
+  const D = window.YS ? YS.device : null;
   let dev = t("sys.desktop");
-  if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) dev = t("sys.tablet");
-  else if (/Mobi|Android|iPhone|iPod/i.test(ua)) dev = t("sys.phone");
+  if (D) dev = D.isIPhone ? "iPhone" : D.isIPad ? "iPad" : D.isTablet ? t("sys.tablet") : D.isPhone ? t("sys.phone") : t("sys.desktop");
   $("#deviceType").textContent = dev;
 
   const bat = $("#deviceBatteryStatus");
@@ -1142,17 +1225,19 @@ function initDeviceStatus() {
 // ---------------------------------------------------------------------
 // PWA install
 // ---------------------------------------------------------------------
+let deferredInstall = null;
 function initPWA() {
-  let deferred;
   const btn = $("#installBtn");
-  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; btn.hidden = false; });
-  window.addEventListener("appinstalled", () => { btn.hidden = true; deferred = null; });
-  btn.addEventListener("click", async () => {
-    if (!deferred) return;
-    deferred.prompt();
-    await deferred.userChoice.catch(() => {});
-    deferred = null; btn.hidden = true;
-  });
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; btn.hidden = false; window.dispatchEvent(new CustomEvent("yd:installready")); });
+  window.addEventListener("appinstalled", () => { btn.hidden = true; deferredInstall = null; window.dispatchEvent(new CustomEvent("yd:installed")); });
+  btn.addEventListener("click", () => installApp());
+}
+async function installApp() {
+  if (!deferredInstall) return false;
+  const d = deferredInstall; deferredInstall = null; $("#installBtn").hidden = true;
+  d.prompt();
+  const r = await d.userChoice.catch(() => null);
+  return !!(r && r.outcome === "accepted");
 }
 
 // ---------------------------------------------------------------------
@@ -1216,9 +1301,29 @@ function runLoading() {
 }
 
 // ---------------------------------------------------------------------
+// Refresh data (dipakai Pull to Refresh) & jembatan untuk station-ui.js
+// ---------------------------------------------------------------------
+async function refreshAll() {
+  await Promise.all([loadPublicSettings(), loadPopularity()]);
+  refreshSystemStatus();
+  renderToolList(); renderFavorites(); renderRecent();
+}
+window.YD = {
+  t, sfx, go, goBack, showToast, changeSetting, refreshAll, installApp,
+  settings: () => S, current: () => current, toolId: () => toolId,
+  hasInstallPrompt: () => !!deferredInstall,
+  maintenance: () => maintenanceSettings, siteName: () => siteSettings.name,
+  toolName, openTool: openToolFromCard, navDir, guideActive: () => !!guideRun && !$("#guideRun").hidden
+};
+
+// ---------------------------------------------------------------------
 // Inisialisasi
 // ---------------------------------------------------------------------
 function init() {
+  if (window.YS) YS.on("favs", () => { renderToolList(); renderFavorites(); syncToolFav(); });
+  if (window.YS) YS.on("recents", () => { if (current === "tools") renderRecent(); });
+  $("#toolFav").addEventListener("click", () => toggleFav(toolId));
+  $("#openFavs").addEventListener("click", () => { sfx("click"); go("favorites"); });
   $$(".ver-text").forEach(el => { el.textContent = VERSION; });
   applySettings();
   applyI18n();
