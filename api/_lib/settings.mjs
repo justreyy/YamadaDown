@@ -28,6 +28,11 @@ export const DEFAULT_SITE = {
   csLink: "https://wa.me/6283869485575"
 };
 
+// Pengumuman global (banner di menu utama). Teks polos, tanpa HTML.
+export const DEFAULT_ANNOUNCEMENT = { enabled: false, text: "", level: "info", id: 0 };
+const ANNOUNCEMENT_LEVELS = ["info", "warn", "good"];
+const ANNOUNCEMENT_KEY = "settings:announcement";
+
 const PLATFORMS_KEY = "settings:platforms";
 const MAINTENANCE_KEY = "settings:maintenance";
 const SITE_KEY = "settings:site";
@@ -153,5 +158,36 @@ export async function saveSiteSettings(update) {
   };
 
   await kvSetJSON(SITE_KEY, next);
+  return true;
+}
+
+function cleanAnnouncement(saved) {
+  const text = String(saved?.text ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
+  return {
+    enabled: Boolean(saved?.enabled) && text.length > 0,
+    text,
+    level: ANNOUNCEMENT_LEVELS.includes(saved?.level) ? saved.level : "info",
+    id: Number(saved?.id) || 0
+  };
+}
+
+export async function getAnnouncement() {
+  const saved = await kvGetJSON(ANNOUNCEMENT_KEY, null);
+  if (!saved || typeof saved !== "object") return structuredClone(DEFAULT_ANNOUNCEMENT);
+  return cleanAnnouncement(saved);
+}
+
+// `id` selalu diperbarui saat disimpan, sehingga pengunjung yang pernah
+// menutup banner akan melihat pengumuman yang baru diedit.
+export async function saveAnnouncement(update) {
+  if (!isKvConfigured()) return false;
+  const current = await getAnnouncement();
+  const next = cleanAnnouncement({
+    enabled: typeof update.enabled === "boolean" ? update.enabled : current.enabled,
+    text: update.text !== undefined ? update.text : current.text,
+    level: update.level !== undefined ? update.level : current.level,
+    id: Date.now()
+  });
+  await kvSetJSON(ANNOUNCEMENT_KEY, next);
   return true;
 }

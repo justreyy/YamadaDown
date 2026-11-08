@@ -5,6 +5,7 @@
 // fire-and-forget dari frontend seperti stats:visits/stats:tools).
 
 import { kvIncr, kvGet, kvSetJSON, kvGetJSON, isKvConfigured } from "./kv.mjs";
+import { recordDaily, logError, toolKey, sanitizeLogText } from "./daily.mjs";
 
 const TOTAL_DOWNLOADS_KEY = "stats:downloads:total";
 const FAILED_REQUESTS_KEY = "stats:api:failed";
@@ -25,9 +26,9 @@ function todayKey() {
 
 // Dipanggil sekali tiap request benar-benar diteruskan ke API downloader
 // (bukan yang ditolak duluan karena maintenance/platform OFF).
-export async function trackApiRequest() {
+export async function trackApiRequest(platform) {
   if (!isKvConfigured()) return;
-  await kvIncr(TOTAL_REQUESTS_KEY);
+  await Promise.all([kvIncr(TOTAL_REQUESTS_KEY), recordDaily(["req", `req:${toolKey(platform)}`])]);
 }
 
 // API downloader error/unreachable -> tandai "Status API" jadi offline.
@@ -35,10 +36,12 @@ export async function trackApiFailure(platform, message) {
   if (!isKvConfigured()) return;
   await Promise.all([
     kvIncr(FAILED_REQUESTS_KEY),
+    recordDaily(["fail", `fail:${toolKey(platform)}`]),
+    logError(platform, message),
     kvSetJSON(LAST_STATUS_KEY, {
       status: "offline",
       platform: platform || "unknown",
-      message: String(message || "").slice(0, 200),
+      message: sanitizeLogText(message),
       at: Date.now()
     })
   ]);
@@ -56,9 +59,9 @@ export async function trackApiSuccess(platform) {
 
 // Dipanggil hanya saat user benar-benar berhasil dapat link file final
 // (request dengan download:true yang sukses), itulah definisi "download".
-export async function trackDownloadCompleted() {
+export async function trackDownloadCompleted(platform) {
   if (!isKvConfigured()) return;
-  await Promise.all([kvIncr(TOTAL_DOWNLOADS_KEY), kvIncr(todayKey())]);
+  await Promise.all([kvIncr(TOTAL_DOWNLOADS_KEY), kvIncr(todayKey()), recordDaily(["dl", `dl:${toolKey(platform)}`])]);
 }
 
 export async function getDashboardStats() {

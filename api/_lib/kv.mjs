@@ -77,3 +77,22 @@ export async function kvExpire(key, seconds) {
 export async function kvDel(key) {
   return kvCommand(["del", key]);
 }
+
+// Banyak perintah dalam SATU request (Upstash /pipeline). Dipakai untuk
+// statistik harian & log error supaya tidak menghabiskan banyak subrequest.
+// Mengembalikan array {result} berurutan, atau null jika gagal.
+export async function kvPipeline(commands) {
+  if (!isKvConfigured() || !Array.isArray(commands) || !commands.length) return null;
+  try {
+    const res = await fetch(`${KV_URL}/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KV_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify(commands)
+    });
+    if (!res.ok) return null;
+    const out = await res.json();
+    return Array.isArray(out) ? out : null;
+  } catch {
+    return null;
+  }
+}
