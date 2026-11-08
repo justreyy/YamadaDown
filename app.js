@@ -157,6 +157,7 @@ function applyI18n(root = document) {
     if (typeof v === "string") el.textContent = v;
   });
   $$("[data-i18n-ph]", root).forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $$("[data-i18n-aria]", root).forEach(el => { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
 }
 
 // ---------------------------------------------------------------------
@@ -1024,6 +1025,8 @@ function renderCfgAndStats() {
       <span class="bar"><i style="width:${Math.max(4, Math.round(((x.count || 0) / max) * 100))}%"></i></span></div>`).join("");
   }
 
+  renderTrend(); renderRates(); renderErrors();
+
   const c = data.config || {};
   $("#cfgList").innerHTML =
     cfgRow(t("admin.cfgKv"), c.kv ? t("admin.cfgOk") : t("admin.cfgMissing"), c.kv ? "ok" : "no") +
@@ -1076,6 +1079,7 @@ async function loadAdminSettings() {
     if (data.platforms) { platformSettings = data.platforms; buildPlatformManager(); renderToolList(); }
     if (data.maintenance) maintenanceSettings = data.maintenance;
     if (data.site) applySiteSettingsToUI(data.site);
+    if (data.announcement) { fillAnnouncementForm(data.announcement); applyAnnouncement(data.announcement.enabled ? data.announcement : null); }
     fillAdminForms();
   } catch { /* biarkan form menampilkan data terakhir */ }
 }
@@ -1097,6 +1101,7 @@ async function saveAdminSettings(payload, statusElId) {
     if (data.platforms) { platformSettings = data.platforms; renderToolList(); }
     if (data.maintenance) maintenanceSettings = data.maintenance;
     if (data.site) { applySiteSettingsToUI(data.site); $("#siteLogoPreview").src = data.site.logoUrl || DEFAULT_SITE_SETTINGS.logoUrl; }
+    if (data.announcement) { fillAnnouncementForm(data.announcement); applyAnnouncement(data.announcement.enabled ? data.announcement : null); }
     say(t("admin.savedOk"), true);
     showToast(t("toast.saved")); sfx("success");
   } catch (error) {
@@ -1104,6 +1109,123 @@ async function saveAdminSettings(payload, statusElId) {
     showToast(t("admin.saveFail", { msg: error.message })); sfx("error");
   }
 }
+// ---------------------------------------------------------------------
+// Tren harian, success rate per tool, log error (panel admin)
+// ---------------------------------------------------------------------
+let trendRange = 7, trendSel = -1;
+function dailyRows() {
+  const all = Array.isArray(lastStats?.daily) ? lastStats.daily : [];
+  return all.slice(-trendRange);
+}
+function fmtDay(stamp) {
+  const [y, m, d] = String(stamp).split("-").map(Number);
+  if (!y) return stamp;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(S.lang === "en" ? "en-US" : "id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
+}
+function renderTrend() {
+  const box = $("#trendChart"); if (!box) return;
+  const rows = dailyRows();
+  if (!rows.length) { box.innerHTML = `<p class="helper">${t("admin.noData")}</p>`; $("#trendReadout").textContent = ""; return; }
+  const W = 320, H = 150, L = 6, R = 6, T = 10, B = 22, iw = W - L - R, ih = H - T - B;
+  const max = Math.max(1, ...rows.map(r => Math.max(r.downloads, r.visits)));
+  const step = iw / rows.length, bw = Math.max(3, Math.min(22, step * 0.58));
+  const y = v => T + ih - (v / max) * ih;
+  if (trendSel < 0 || trendSel >= rows.length) trendSel = rows.length - 1;
+  const every = rows.length > 10 ? Math.ceil(rows.length / 6) : 1;
+  let bars = "", labels = "", hits = "", pts = [];
+  rows.forEach((r, i) => {
+    const cx = L + step * i + step / 2;
+    const bh = (r.downloads / max) * ih;
+    bars += `<rect class="tr-bar${i === trendSel ? " sel" : ""}" x="${(cx - bw / 2).toFixed(1)}" y="${(T + ih - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(r.downloads ? 2 : 0, bh).toFixed(1)}" rx="1.5"/>`;
+    pts.push(`${cx.toFixed(1)},${y(r.visits).toFixed(1)}`);
+    if (i % every === 0 || i === rows.length - 1) labels += `<text class="tr-lbl" x="${(i === 0 && rows.length > 10 ? L : i === rows.length - 1 ? W - R : cx).toFixed(1)}" y="${H - 6}" text-anchor="${i === 0 && rows.length > 10 ? "start" : i === rows.length - 1 && rows.length > 1 ? "end" : "middle"}">${escapeHtml(fmtDay(r.date))}</text>`;
+    hits += `<rect class="tr-hit" data-i="${i}" x="${(L + step * i).toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H - B}" fill="transparent"/>`;
+  });
+  const dots = rows.map((r, i) => `<circle class="tr-dot${i === trendSel ? " sel" : ""}" cx="${(L + step * i + step / 2).toFixed(1)}" cy="${y(r.visits).toFixed(1)}" r="${i === trendSel ? 4 : 2.5}"/>`).join("");
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeAttr(t("admin.trend"))}" preserveAspectRatio="xMidYMid meet">
+    <line class="tr-axis" x1="${L}" x2="${W - R}" y1="${T + ih}" y2="${T + ih}"/>
+    <text class="tr-lbl" x="${L}" y="${T - 1}">${fmtNum(max)}</text>
+    ${bars}<polyline class="tr-line" points="${pts.join(" ")}"/>${dots}${labels}${hits}</svg>`;
+  const r = rows[trendSel];
+  $("#trendReadout").textContent = t("admin.trendRead", { d: fmtDay(r.date), v: fmtNum(r.visits), dl: fmtNum(r.downloads), f: fmtNum(r.failed) });
+}
+function renderRates() {
+  const box = $("#rateList"); if (!box) return;
+  const sum = {};
+  for (const r of dailyRows()) for (const [id, v] of Object.entries(r.tools || {})) {
+    const s = sum[id] || (sum[id] = { req: 0, fail: 0 });
+    s.req += v.requests || 0; s.fail += v.failed || 0;
+  }
+  const ids = Object.keys(sum).filter(id => sum[id].req > 0).sort((p, q) => sum[q].req - sum[p].req);
+  if (!ids.length) { box.innerHTML = `<p class="helper">${t("admin.rateNone")}</p>`; return; }
+  box.innerHTML = ids.map(id => {
+    const s = sum[id], ok = Math.max(0, s.req - s.fail), pct = Math.round(ok / s.req * 100);
+    const cls = pct >= 90 ? "ok" : pct >= 70 ? "mid" : "no";
+    const name = TOOL_META[id] ? toolName(id) : id.toUpperCase();
+    return `<div class="rate"><b>${escapeHtml(name)}</b><span class="pct ${cls}">${pct}%</span>
+      <span class="bar ${cls}"><i style="width:${pct}%"></i></span><small>${t("admin.rateReq", { n: fmtNum(s.req) })} · ${fmtNum(s.fail)} ✕</small></div>`;
+  }).join("");
+}
+function renderErrors() {
+  const ul = $("#errList"); if (!ul) return;
+  const errs = Array.isArray(lastStats?.errors) ? lastStats.errors : [];
+  $("#errClearBtn").hidden = !errs.length;
+  if (!errs.length) { ul.innerHTML = `<li class="err-none">${t("admin.errNone")}</li>`; return; }
+  ul.innerHTML = errs.map(e => `<li><span class="tg">${escapeHtml(String(e.tool || "").toUpperCase())}</span><span class="m">${escapeHtml(e.msg)}</span><time>${escapeHtml(timeAgo(e.ts))}</time></li>`).join("");
+}
+$("#trendRange")?.addEventListener("click", e => {
+  const b = e.target.closest("button[data-range]"); if (!b) return;
+  trendRange = Number(b.dataset.range); trendSel = -1;
+  $$("#trendRange button").forEach(x => x.classList.toggle("active", x === b));
+  renderTrend(); renderRates();
+});
+$("#trendChart")?.addEventListener("click", e => {
+  const hit = e.target.closest(".tr-hit"); if (!hit) return;
+  trendSel = Number(hit.dataset.i); renderTrend();
+});
+$("#errClearBtn")?.addEventListener("click", async () => {
+  await saveAdminSettings({ clearErrors: true });
+  if (lastStats) lastStats.errors = [];
+  renderErrors();
+});
+
+// ---------------------------------------------------------------------
+// Pengumuman global
+// ---------------------------------------------------------------------
+let annLevelSel = "info";
+function applyAnnouncement(a) {
+  const box = $("#announce"); if (!box) return;
+  let dismissed = null;
+  try { dismissed = localStorage.getItem("ys_ann_dismissed"); } catch {}
+  if (!a || !a.text || String(a.id) === dismissed) { box.hidden = true; return; }
+  box.dataset.level = ["info", "warn", "good"].includes(a.level) ? a.level : "info";
+  box.dataset.id = String(a.id);
+  $("#announceText").textContent = a.text;
+  box.hidden = false;
+}
+$("#announceClose")?.addEventListener("click", () => {
+  const box = $("#announce");
+  try { localStorage.setItem("ys_ann_dismissed", box.dataset.id || ""); } catch {}
+  box.hidden = true; sfx("tap");
+});
+function fillAnnouncementForm(a) {
+  a = a || {};
+  $("#annToggle").checked = Boolean(a.enabled);
+  $("#annText").value = a.text || "";
+  annLevelSel = ["info", "warn", "good"].includes(a.level) ? a.level : "info";
+  $$("#annLevel button").forEach(b => b.classList.toggle("active", b.dataset.level === annLevelSel));
+}
+$("#annLevel")?.addEventListener("click", e => {
+  const b = e.target.closest("button[data-level]"); if (!b) return;
+  annLevelSel = b.dataset.level;
+  $$("#annLevel button").forEach(x => x.classList.toggle("active", x === b));
+});
+$("#annSaveBtn")?.addEventListener("click", () => {
+  const text = $("#annText").value.trim(), enabled = $("#annToggle").checked;
+  if (enabled && !text) { const el = $("#annSaveStatus"); el.textContent = t("admin.annEmpty"); el.className = "msg msg-bad"; el.hidden = false; return; }
+  saveAdminSettings({ announcement: { enabled, text, level: annLevelSel } }, "#annSaveStatus");
+});
+
 function collectPlatformFormPayload() {
   const platforms = {};
   $$(".platform-toggle").forEach(toggle => {
@@ -1172,6 +1294,7 @@ async function loadPublicSettings() {
     if (data.platforms) { platformSettings = data.platforms; renderToolList(); }
     if (data.site) applySiteSettingsToUI(data.site);
     if (data.maintenance) applyMaintenanceState(data.maintenance);
+    applyAnnouncement(data.announcement || null);
   } catch { /* web tetap bisa dipakai kalau /api/settings gagal */ }
 }
 $("#maintenanceRetryBtn").addEventListener("click", async () => {

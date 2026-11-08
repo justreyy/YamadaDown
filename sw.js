@@ -1,7 +1,7 @@
 /* YAMADA DOWN service worker: cache cangkang aplikasi agar bisa dibuka
    seperti app, termasuk offline (GUIDE ada di content.js yang ikut ter-cache).
    /api/* TIDAK PERNAH di-cache; tidak ada data pengguna yang disimpan di sini. */
-const CACHE = "yamada-down-v7.1.0";
+const CACHE = "yamada-down-v8.0.0";
 const SHELL = [
   "/", "/index.html", "/offline.html", "/style.css", "/station.css", "/app.js", "/station-core.js", "/station-ui.js", "/content.js", "/manifest.webmanifest",
   "/assets/ryo.webp", "/assets/ryo-sm.webp", "/assets/icon-192.png", "/assets/icon-512.png",

@@ -101,6 +101,11 @@
       <span class="chip chip-status" id="menuStatus"><i class="dot"></i><span id="menuStatusText">ONLINE</span></span>
     </header>
 
+    <div id="announce" class="announce" data-level="info" role="status" hidden>
+      <svg class="i"><use href="#i-bell"/></svg><span id="announceText"></span>
+      <button id="announceClose" type="button" data-i18n-aria="ann.close" aria-label="Tutup"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+
     <div class="menu-grid">
       <div class="stage">
         <div class="portrait"><div class="mascot" data-mascot data-size="xl" data-mood="normal" data-secret></div></div>
@@ -411,6 +416,29 @@
         </div>
 
         <div class="panel">
+          <h3 class="panel-h"><svg class="i"><use href="#i-chart"/></svg><span data-i18n="admin.trend">Tren Harian</span></h3>
+          <div class="seg seg-full" id="trendRange" role="group">
+            <button type="button" data-range="7" class="active">7 <span data-i18n="admin.days">HARI</span></button>
+            <button type="button" data-range="30">30 <span data-i18n="admin.days">HARI</span></button>
+          </div>
+          <div id="trendChart" class="trend" aria-hidden="false"></div>
+          <p id="trendReadout" class="trend-read" aria-live="polite"></p>
+          <div class="legend"><span><i class="lg lg-dl"></i><span data-i18n="admin.legDl">Download</span></span><span><i class="lg lg-vi"></i><span data-i18n="admin.legVisit">Pengunjung</span></span></div>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-h"><svg class="i"><use href="#i-shield"/></svg><span data-i18n="admin.rate">Success Rate per Tool</span></h3>
+          <div id="rateList" class="rate-list"><p class="helper">...</p></div>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-h"><svg class="i"><use href="#i-info"/></svg><span data-i18n="admin.errLog">Log Error Terbaru</span></h3>
+          <p class="helper" data-i18n="admin.errHint">Link yang dimasukkan pengunjung tidak disimpan.</p>
+          <ul id="errList" class="err-list"></ul>
+          <button id="errClearBtn" class="btn btn-soft btn-sm" type="button"><svg class="i"><use href="#i-trash"/></svg><span data-i18n="admin.errClear">HAPUS LOG</span></button>
+        </div>
+
+        <div class="panel">
           <h3 class="panel-h"><svg class="i"><use href="#i-flame"/></svg><span data-i18n="admin.popular">Tools Paling Populer</span></h3>
           <div id="popularToolsList" class="rank-list"><p class="helper">...</p></div>
           <button id="panelRefreshBtn" class="btn btn-soft btn-sm" type="button"><svg class="i"><use href="#i-refresh"/></svg><span data-i18n="btn.refresh">REFRESH</span></button>
@@ -454,6 +482,23 @@
           <textarea id="maintenanceMessageInput" class="field" rows="3" maxlength="500"></textarea>
           <button id="maintenanceSaveBtn" class="btn btn-primary" type="button"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn.save">SIMPAN</span></button>
           <p id="maintenanceSaveStatus" class="msg" hidden></p>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-h"><svg class="i"><use href="#i-bell"/></svg><span data-i18n="admin.ann">Pengumuman</span></h3>
+          <p class="helper" data-i18n="admin.annHint">Tampil sebagai banner di menu utama.</p>
+          <div class="opt"><div class="opt-text"><span data-i18n="admin.annToggle">Tampilkan pengumuman</span></div>
+            <label class="switch"><input type="checkbox" id="annToggle"><span class="knob"></span></label></div>
+          <label class="label" for="annText" data-i18n="admin.annText">Teks pengumuman</label>
+          <textarea id="annText" class="field" rows="2" maxlength="200"></textarea>
+          <label class="label" data-i18n="admin.annLevel">Jenis</label>
+          <div class="seg seg-full" id="annLevel" role="group">
+            <button type="button" data-level="info" class="active" data-i18n="admin.annInfo">INFO</button>
+            <button type="button" data-level="warn" data-i18n="admin.annWarn">PENTING</button>
+            <button type="button" data-level="good" data-i18n="admin.annGood">KABAR BAIK</button>
+          </div>
+          <button id="annSaveBtn" class="btn btn-primary" type="button"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn.save">SIMPAN</span></button>
+          <p id="annSaveStatus" class="msg" hidden></p>
         </div>
       </div>
     </div>
