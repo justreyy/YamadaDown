@@ -37,7 +37,7 @@ export default async function handler(request) {
 
   const apiBase = process.env.PINTEREST_API_URL || "https://api.nexray.eu.cc/downloader/pinterest";
 
-  await trackApiRequest();
+  await trackApiRequest("pinterest");
 
   try {
     const apiUrl = `${apiBase}?url=${encodeURIComponent(url)}`;
@@ -96,7 +96,7 @@ export default async function handler(request) {
       if (!chosen || !chosen.url) {
         return Response.json({ error: "Format yang dipilih tidak ditemukan." }, { status: 422 });
       }
-      await trackDownloadCompleted();
+      await trackDownloadCompleted("pinterest");
       return Response.json({
         url: chosen.url,
         extension: chosen.extension,

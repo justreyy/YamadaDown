@@ -9,8 +9,11 @@ import {
   getMaintenanceSettings,
   saveMaintenanceSettings,
   getSiteSettings,
-  saveSiteSettings
+  saveSiteSettings,
+  getAnnouncement,
+  saveAnnouncement
 } from "./_lib/settings.mjs";
+import { clearErrorLog } from "./_lib/daily.mjs";
 
 async function isAuthorized(request) {
   const authHeader = request.headers.get("authorization") || "";
@@ -19,12 +22,13 @@ async function isAuthorized(request) {
 }
 
 async function loadAllSettings() {
-  const [platforms, maintenance, site] = await Promise.all([
+  const [platforms, maintenance, site, announcement] = await Promise.all([
     getPlatformSettings(),
     getMaintenanceSettings(),
-    getSiteSettings()
+    getSiteSettings(),
+    getAnnouncement()
   ]);
-  return { platforms, maintenance, site };
+  return { platforms, maintenance, site, announcement };
 }
 
 export default async function handler(request) {
@@ -79,6 +83,14 @@ export default async function handler(request) {
 
   if (body?.site && typeof body.site === "object") {
     await saveSiteSettings(body.site);
+  }
+
+  if (body?.announcement && typeof body.announcement === "object") {
+    await saveAnnouncement(body.announcement);
+  }
+
+  if (body?.clearErrors === true) {
+    await clearErrorLog();
   }
 
   const settings = await loadAllSettings();

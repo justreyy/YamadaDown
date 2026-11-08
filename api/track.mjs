@@ -1,5 +1,7 @@
 export const config = { runtime: "edge" };
 
+import { recordDaily } from "./_lib/daily.mjs";
+
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
@@ -36,6 +38,7 @@ export default async function handler(request) {
   try {
     if (event === "visit") {
       await kvCommand(["incr", "stats:visits"]);
+      await recordDaily(["visits"]);
     } else if (event === "tool" && body?.tool) {
       const tool = String(body.tool).replace(/[^a-z0-9_-]/gi, "").slice(0, 40);
       if (tool) await kvCommand(["hincrby", "stats:tools", tool, "1"]);

@@ -4,6 +4,7 @@ import { verifyAdminToken } from "./_lib/adminAuth.mjs";
 import { isKvConfigured, kvGet, kvHGetAll } from "./_lib/kv.mjs";
 import { getDashboardStats } from "./_lib/stats.mjs";
 import { getConfigStatus } from "./_lib/config.mjs";
+import { getDailySeries, getErrorLog } from "./_lib/daily.mjs";
 
 export default async function handler(request) {
   if (request.method !== "GET") {
@@ -30,6 +31,8 @@ export default async function handler(request) {
         apiRequests: 0,
         apiFailed: 0,
         apiStatus: { status: "unknown", at: null },
+        daily: await getDailySeries(30),
+        errors: [],
         notice:
           "Vercel KV belum disetup, jadi statistik pengunjung belum tersimpan. Tambahkan KV database dari dashboard Vercel (Storage > Create Database > KV)."
       },
@@ -37,10 +40,12 @@ export default async function handler(request) {
     );
   }
 
-  const [totalVisitsRaw, toolsRaw, dashboardStats] = await Promise.all([
+  const [totalVisitsRaw, toolsRaw, dashboardStats, daily, errors] = await Promise.all([
     kvGet("stats:visits"),
     kvHGetAll("stats:tools"),
-    getDashboardStats()
+    getDashboardStats(),
+    getDailySeries(30),
+    getErrorLog(30)
   ]);
 
   const totalVisits = Number(totalVisitsRaw || 0);
@@ -55,6 +60,8 @@ export default async function handler(request) {
       config: getConfigStatus(),
       totalVisits,
       popularTools,
+      daily,
+      errors,
       ...dashboardStats
     },
     { status: 200, headers: { "Cache-Control": "no-store" } }

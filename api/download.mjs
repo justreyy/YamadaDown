@@ -59,7 +59,7 @@ export default async function handler(request) {
   const apiBase = process.env.DOWNLOADER_API_URL || "https://api.nexray.eu.cc/downloader/aio";
 
   // Dari sini request beneran diteruskan ke API downloader -> baru dihitung.
-  await trackApiRequest();
+  await trackApiRequest(platform);
 
   try {
     const apiUrl = `${apiBase}?url=${encodeURIComponent(url)}`;
@@ -105,7 +105,7 @@ export default async function handler(request) {
         return Response.json({ error: "Format yang dipilih tidak ditemukan." }, { status: 422 });
       }
       // Ini titik dimana user beneran dapat link file final -> hitung "download".
-      await trackDownloadCompleted();
+      await trackDownloadCompleted(platform);
       return Response.json({
         url: chosen.url,
         extension: chosen.extension,
